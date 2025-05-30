@@ -1,0 +1,173 @@
+# This workflow will build and push .NET Core apps (frontend and backend)
+# to Azure Web Apps when a commit is pushed to the main branch.
+#
+# This workflow assumes you have already created the target Azure App Service web apps.
+#
+# To configure this workflow:
+#
+# 1. For EACH Azure Web App (Frontend and Backend):
+#    - Download its Publish Profile. You can find this on the Overview page of your Web App in the Azure Portal.
+#    - For more information: https://docs.microsoft.com/en-us/azure/app-service/deploy-github-actions?tabs=applevel#generate-deployment-credentials
+#
+# 2. Create secrets in your GitHub repository:
+#    - AZURE_FRONTEND_PUBLISH_PROFILE: Paste the publish profile contents for your frontend Web App.
+#    - AZURE_BACKEND_PUBLISH_PROFILE: Paste the publish profile contents for your backend Web App.
+#    - For instructions: https://docs.microsoft.com/azure/app-service/deploy-github-actions#configure-the-github-secret
+#
+# 3. Update the environment variables below:
+#    - DOTNET_VERSION: Set to your desired .NET Core version.
+#    - AZURE_FRONTEND_APP_NAME: Set to the name of your Azure Web App for the frontend.
+#    - AZURE_BACKEND_APP_NAME: Set to the name of your Azure Web App for the backend.
+#    - FRONTEND_PROJECT_PATH: Path to your frontend project (default: SIMS).
+#    - BACKEND_PROJECT_PATH: Path to your backend project (default: SIMSAPI).
+
+name: Build and Deploy Frontend (SIMS) and Backend (SIMSAPI)
+
+env:
+  DOTNET_VERSION: '8.0'    # Specify the .NET Core version (e.g., '6.0', '7.0', '8.0'). Original was '5.0'.
+  FRONTEND_PROJECT_PATH: 'SIMS'
+  BACKEND_PROJECT_PATH: 'SIMSAPI'
+
+  # Configuration for Frontend App deployment
+  AZURE_FRONTEND_APP_NAME: 'ASP-rgsimsdemo-a8f4'    # Replace with your frontend Azure Web App name
+
+  # Configuration for Backend API deployment
+  AZURE_BACKEND_APP_NAME: 'your-backend-api-app-name'   # Replace with your backend Azure Web App name
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read # Needed to checkout the repository
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      # Define outputs that can be used by dependent jobs
+      frontend_artifact_name: ${{ steps.set_artifact_names.outputs.frontend_name }}
+      backend_artifact_name: ${{ steps.set_artifact_names.outputs.backend_name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set Artifact Names
+        id: set_artifact_names
+        run: |
+          echo "frontend_name=frontend-app" >> $GITHUB_OUTPUT
+          echo "backend_name=backend-app" >> $GITHUB_OUTPUT
+        # This step defines the names for the artifacts to be used consistently.
+
+      - name: Set up .NET Core SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          # Optional: if using private NuGet feeds like GitHub Packages
+          # source-url: https://nuget.pkg.github.com/YOUR_ORGANIZATION_OR_USER/index.json
+          # env:
+          #   NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up dependency caching for faster builds
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          # Cache key includes OS, nuget, and hashes of project/lock files
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      # --- Build and Publish Frontend (SIMS) ---
+      - name: Build Frontend (${{ env.FRONTEND_PROJECT_PATH }})
+        run: dotnet build ${{ env.FRONTEND_PROJECT_PATH }} --configuration Release
+        # Builds the frontend project. Assumes it's a .NET project.
+        # If it's a Node.js app (React, Angular, Vue), you'll need different steps here:
+        # - name: Setup Node.js
+        #   uses: actions/setup-node@v3
+        #   with:
+        #     node-version: '18' # or your desired version
+        # - name: Install frontend dependencies
+        #   run: npm install
+        #   working-directory: ${{ env.FRONTEND_PROJECT_PATH }}
+        # - name: Build frontend
+        #   run: npm run build # or your build script
+        #   working-directory: ${{ env.FRONTEND_PROJECT_PATH }}
+
+      - name: Publish Frontend (${{ env.FRONTEND_PROJECT_PATH }})
+        run: dotnet publish ${{ env.FRONTEND_PROJECT_PATH }} --configuration Release -o ${{ github.workspace }}/published_frontend
+        # Publishes the frontend to a specific output directory.
+        # For Node.js apps, this step would involve copying the build output (e.g., 'build' or 'dist' folder).
+        # For example: cp -r ${{ env.FRONTEND_PROJECT_PATH }}/build ${{ github.workspace }}/published_frontend
+
+      - name: Upload Frontend Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.set_artifact_names.outputs.frontend_name }}
+          path: ${{ github.workspace }}/published_frontend
+          if-no-files-found: error # Fails the workflow if no files are found to upload
+
+      # --- Build and Publish Backend (SIMSAPI) ---
+      - name: Build Backend (${{ env.BACKEND_PROJECT_PATH }})
+        run: dotnet build ${{ env.BACKEND_PROJECT_PATH }} --configuration Release
+        # Builds the backend API project.
+
+      - name: Publish Backend (${{ env.BACKEND_PROJECT_PATH }})
+        run: dotnet publish ${{ env.BACKEND_PROJECT_PATH }} --configuration Release -o ${{ github.workspace }}/published_backend
+        # Publishes the backend API to a specific output directory.
+
+      - name: Upload Backend Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.set_artifact_names.outputs.backend_name }}
+          path: ${{ github.workspace }}/published_backend
+          if-no-files-found: error # Fails the workflow if no files are found to upload
+
+  deploy_frontend:
+    permissions:
+      contents: none # No repository content access needed for deployment job itself
+    runs-on: ubuntu-latest
+    needs: build # This job depends on the successful completion of the 'build' job
+    # Condition to run this job, e.g., only on pushes to the main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: 'Frontend_Production' # Define an environment name (e.g., Development, Staging, Production)
+      url: ${{ steps.deploy-frontend-to-webapp.outputs.webapp-url }} # URL of the deployed frontend app
+    steps:
+      - name: Download Frontend Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.frontend_artifact_name }} # Use the output from the build job
+          # path: specific_folder_for_frontend # Optional: download to a specific subfolder
+
+      - name: Deploy Frontend to Azure Web App
+        id: deploy-frontend-to-webapp
+        uses: azure/webapps-deploy@v3 # Use the latest version of the Azure Web Apps Deploy action
+        with:
+          app-name: ${{ env.AZURE_FRONTEND_APP_NAME }}
+          publish-profile: ${{ secrets.AZURE_FRONTEND_PUBLISH_PROFILE }} # Secret containing the publish profile
+          package: '.' # Deploy the contents of the downloaded artifact's root directory
+
+  deploy_backend:
+    permissions:
+      contents: none
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: 'Backend_Production'
+      url: ${{ steps.deploy-backend-to-webapp.outputs.webapp-url }}
+    steps:
+      - name: Download Backend Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.backend_artifact_name }}
+          # path: specific_folder_for_backend
+
+      - name: Deploy Backend API to Azure Web App
+        id: deploy-backend-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_BACKEND_APP_NAME }}
+          publish-profile: ${{ secrets.AZURE_BACKEND_PUBLISH_PROFILE }}
+          package: '.'
