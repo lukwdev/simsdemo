@@ -7,26 +7,22 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build_frontend:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-    - name: build frontend
-      run: cd SIMS
-    - name: Build the Docker image
+    - name: Build the Docker image for frontend
+      # Set the working directory for the docker build command
+      working-directory: ./SIMS
       run: docker build . --file Dockerfile --tag sims-frontend:latest
-
+      # This assumes your Dockerfile for the frontend is located at ./SIMS/Dockerfile
 
   build_backend:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-    - name: build backend
-      run: cd SIMSAPI
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag sims-frontend:latest
+    - name: Build the Docker image for backend
+      # Set the working directory for the docker build command
+      working-directory: ./SIMSAPI
+      run: docker build . --file Dockerfile --tag sims-backend:latest # Corrected tag
+      # This assumes your Dockerfile for the backend is located at ./SIMSAPI/Dockerfile
