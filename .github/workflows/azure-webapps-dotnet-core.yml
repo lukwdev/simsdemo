@@ -148,26 +148,27 @@ jobs:
           publish-profile: ${{ secrets.AZURE_FRONTEND_PUBLISH_PROFILE }} # Secret containing the publish profile
           package: '.' # Deploy the contents of the downloaded artifact's root directory
 
-  deploy_backend:
-    permissions:
-      contents: none
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment:
-      name: 'Backend_Production'
-      url: ${{ steps.deploy-backend-to-webapp.outputs.webapp-url }}
-    steps:
-      - name: Download Backend Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.build.outputs.backend_artifact_name }}
-          # path: specific_folder_for_backend
-
-      - name: Deploy Backend API to Azure Web App
-        id: deploy-backend-to-webapp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ env.AZURE_BACKEND_APP_NAME }}
-          publish-profile: ${{ secrets.AZURE_BACKEND_PUBLISH_PROFILE }}
-          package: '.'
+#  deploy_backend:
+ #   permissions:
+#      contents: none
+#    runs-on: ubuntu-latest
+#    needs: build
+#    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+#    environment:
+#      name: 'Backend_Production'
+#      url: ${{ steps.deploy-backend-to-webapp.outputs.webapp-url }}
+#    steps:
+#      - name: Download Backend Artifact
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: ${{ needs.build.outputs.backend_artifact_name }}
+#          # path: specific_folder_for_backend
+#
+#      - name: Deploy Backend API to Azure Web App
+#        id: deploy-backend-to-webapp
+#        uses: azure/webapps-deploy@v3
+#        with:
+#          app-name: ${{ env.AZURE_BACKEND_APP_NAME }}
+#          publish-profile: ${{ secrets.AZURE_BACKEND_PUBLISH_PROFILE }}
+#          package: '.'
+#
