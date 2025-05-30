@@ -29,7 +29,7 @@ env:
   BACKEND_PROJECT_PATH: 'SIMSAPI'
 
   # Configuration for Frontend App deployment
-  AZURE_FRONTEND_APP_NAME: 'ASP-rgsimsdemo-a8f4'    # Replace with your frontend Azure Web App name
+  AZURE_FRONTEND_APP_NAME: 'sims-frontend'    # Replace with your frontend Azure Web App name
 
   # Configuration for Backend API deployment
   AZURE_BACKEND_APP_NAME: 'your-backend-api-app-name'   # Replace with your backend Azure Web App name
