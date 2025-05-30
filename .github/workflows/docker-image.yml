@@ -1,0 +1,32 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build_frontend:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: build frontend
+      run: cd SIMS
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag sims-frontend:latest
+
+
+  build_backend:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: build backend
+      run: cd SIMSAPI
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag sims-frontend:latest
