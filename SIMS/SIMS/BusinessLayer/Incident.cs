@@ -40,6 +40,7 @@ namespace SIMS
 
         public List<Incident> GetList()
         {
+            Console.WriteLine("!!!!!! Hier ist der hoffentlich richtige ConnectionString: " + base.ConnectionString);
             List<Incident> result = new List<Incident>();
             using (NpgsqlConnection db = new NpgsqlConnection(base.ConnectionString))
             {
