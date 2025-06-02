@@ -34,6 +34,7 @@ namespace SIMS
                             Reported_at = Convert.ToDateTime(reader["Reported_at"]);
                             Incident_type = Convert.ToInt32(reader["Incident_type_id"]);
                             Resource_id = (string) reader["Resource_id"];
+                            Escalated = Convert.ToBoolean(reader["Escalated"]);
                             
                         }
                     }

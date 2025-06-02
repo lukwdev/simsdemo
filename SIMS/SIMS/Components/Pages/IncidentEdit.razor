@@ -50,9 +50,18 @@
     <hr />
     <div class="form-group" style="margin-top: 10px;">
         <button type="button" class="btn btn-success" @onclick="cmdSave_Clicked">Save incident</button>
-        <button type="button" class="btn btn-warning" disabled="@incident.Escalated" @onclick="cmdEscalate_Clicked">Escalate</button>
+        <button type="button" class="btn btn-warning" disabled="@incident.Escalated" @onclick="EscalateAsync">Escalate</button>
         <span class="text-danger" style="margin-left: 10px; font-weight: bold">@escalateMessage</span>
     </div>
+    
+    
+    @if (isLoading)
+    {
+        <div class="spinner-border text-warning" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    }
+
 
 </div>
 
@@ -111,4 +120,37 @@
         
 
     }
+
+    private bool isLoading = false;
+    private async Task EscalateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(incident.Resource_id))
+        {
+            escalateMessage = "Please provide a Resource Id!";
+            return;
+        }
+
+        escalateMessage = "Escalating... Please Wait!";
+        isLoading = true;
+        StateHasChanged(); // UI sofort aktualisieren
+
+        await Task.Delay(100); // UI-Zeit geben, Spinner anzuzeigen
+
+        bool success = await Task.Run(() => Helper.StopResource(incident.Resource_id));
+
+        isLoading = false;
+
+        if (success)
+        {
+            incident.Escalated = true;
+            incident.Save();
+            NavManager.NavigateTo("incidents");
+        }
+        else
+        {
+            escalateMessage = "Escalation failed!";
+            StateHasChanged();
+        }
+    }
+
 }
