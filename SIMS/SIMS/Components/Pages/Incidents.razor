@@ -22,6 +22,8 @@ else
                 <th>Reporter</th>
                 <th>Type</th>
                 <th>Description</th>
+                <th>ResourceId</th>
+                <th>Escalated</th>
                 <th>Edit</th>
             </tr>
         </thead>
@@ -34,6 +36,8 @@ else
                     <td>@item.Reporter</td>
                     <td>@typeToString(item.Incident_type)</td>
                     <td>@item.Description</td>
+                    <td>@item.Resource_id</td>
+                    <td>@item.Escalated</td>
                     <td>
                         <a href="/IncidentEdit?id=@item.Incident_id" class="btn btn-primary btn-sm">Edit</a>
                     </td>

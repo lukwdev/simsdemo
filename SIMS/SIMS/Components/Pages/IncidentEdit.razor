@@ -39,10 +39,14 @@
         <label for="closed">Closed:</label>
         <input type="checkbox" id="closed" @bind="incident.Resolved">
     </div>
+    <div class="form-group" style="margin-bottom: 10px; margin-top: 10px;">
+        <label for="escalated">Escalated:</label>
+        <input type="checkbox" id="escalated" readonly @bind="incident.Escalated">
+    </div>
     <hr />
     <div class="form-group" style="margin-top: 10px;">
         <button type="button" class="btn btn-success" @onclick="cmdSave_Clicked">Save incident</button>
-        <button type="button" class="btn btn-warning" @onclick="cmdEscalate_Clicked">Escalate</button>
+        <button type="button" class="btn btn-warning" disabled="@incident.Escalated" @onclick="cmdEscalate_Clicked">Escalate</button>
         <span class="text-danger" style="margin-left: 10px; font-weight: bold">@escalateMessage</span>
     </div>
 
@@ -85,6 +89,22 @@
 
     private void cmdEscalate_Clicked()
     {
-        escalateMessage = "Sorry, not implemented";
+        if (incident.Resource_id.Length == 0)
+        {
+            escalateMessage = "Please provide a Resource Id!";
+        }
+        escalateMessage = "Escalating... Please Wait!";
+        if (Helper.StopResource(incident.Resource_id))
+        {
+            incident.Escalated = true;
+            incident.Save();
+            NavManager.NavigateTo("incidents");
+        }
+        else
+        {
+            escalateMessage = "Escalation failed!";
+        }
+        
+
     }
 }
