@@ -98,7 +98,7 @@ namespace SIMS
                     cmd.Parameters.AddWithValue("title", Title);
                     cmd.Parameters.AddWithValue("resolved", Resolved);
                     cmd.Parameters.AddWithValue("incident_type_id", Incident_type);
-                    cmd.Parameters.AddWithValue("ressource_id", Resource_id);
+                    cmd.Parameters.AddWithValue("resource_id", Resource_id);
                     cmd.Parameters.AddWithValue("escalated", Escalated);
                     cmd.ExecuteNonQuery();
                 }
