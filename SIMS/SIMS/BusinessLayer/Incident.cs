@@ -83,11 +83,11 @@ namespace SIMS
                 if (Incident_id == 0)
                 {
                     sql += $"INSERT INTO sims.incident(resolved, reporter, reported_at, description, title, incident_type_id, resource_id, escalated) ";
-                    sql += $"VALUES (@resolved, @reporter, @reported_at, @description, @title, @incident_type_id, @resource_id, @escalated) );";
+                    sql += $"VALUES (@resolved, @reporter, @reported_at, @description, @title, @incident_type_id, @resource_id, @escalated);";
                 }
                 else
                 {
-                    sql += $"update sims.incident set resolved = @resolved, reporter = @reporter, reported_at = @reported_at, resource_id = @resource_id, escalated = @escalated ";
+                    sql += $"update sims.incident set resolved = @resolved, reporter = @reporter, reported_at = @reported_at, resource_id = @resource_id, escalated = @escalated, ";
                     sql += $"description = @description, title = @title, incident_type_id = @incident_type_id where Incident_id = {Incident_id};";
                 }
                 using (NpgsqlCommand cmd = new NpgsqlCommand(sql, db))
